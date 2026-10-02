@@ -1,0 +1,33 @@
+name: Build MFO_SPRtoBMP
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    - name: List all files for debug
+      run: Get-ChildItem -Recurse
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    # ========= 重點：如果 sln 在子資料夾，要改這行路徑 =========
+    - name: Build Release
+      run: msbuild .\MFO_SPRtoBMP.sln /p:Configuration=Release
+
+    - name: Pack zip
+      run: |
+        Compress-Archive -Path bin\Release\* -DestinationPath MFO_SPRtoBMP.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MFO_SPRtoBMP
+        path: MFO_SPRtoBMP.zip
