@@ -2,7 +2,7 @@ name: Build MFO_SPRtoBMP
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -18,9 +18,8 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    # ========= 重點：如果 sln 在子資料夾，要改這行路徑 =========
     - name: Build Release
-      run: msbuild .\MFO_SPRtoBMP.sln /p:Configuration=Release
+      run: msbuild .\SPRtoBMP.sln /p:Configuration=Release
 
     - name: Pack zip
       run: |
