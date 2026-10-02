@@ -1,4 +1,4 @@
-name: Build SPRtoBMP Build
+name: Build SPRtoBMP Build 
 
 on:
   push:
