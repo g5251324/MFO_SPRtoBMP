@@ -1,33 +1,40 @@
-name: Build MFO_SPRtoBMP
+name: Build SPRtoBMP Build
 
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch: # 允許您在 Actions 頁面手動點擊按鈕觸發打包
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019 # 使用包含 Visual Studio 2019 的環境
+
     steps:
-    - name: Checkout source
+    - name: 複製儲存庫原始碼
       uses: actions/checkout@v4
 
-    - name: Install VS BuildTools, MFC + Windows SDK 10.0.14393
-      run: |
-        choco install visualstudio2022-buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.MFC --add Microsoft.VisualStudio.Component.Windows10SDK.14393"
-
-    - name: Setup MSBuild
+    - name: 新增 MSBuild 到環境變數
       uses: microsoft/setup-msbuild@v2
 
-    - name: Build Release
-      run: msbuild .\SPRtoBMP.sln /p:Configuration=Release
-
-    - name: Pack zip
+    - name: 尋找並安裝 MFC 組件
       run: |
-        Compress-Archive -Path bin\Release\* -DestinationPath MFO_SPRtoBMP.zip
+        # 透過 vswhere 尋找 Visual Studio 的安裝路徑
+        $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.ATLMFC -property installationPath
+        if (-not $vsPath) {
+          Write-Host "找不到內建 MFC 的 VS 環境，正在嘗試使用預設 MSBuild 編譯..."
+        }
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
+    - name: 執行編譯 (Release 模式)
+      run: |
+        msbuild SPRtoBMP.sln -t:rebuild -p:Configuration=Release -p:Platform=x86
+
+    - name: 打包成可執行檔成品
+      uses: actions/artifacts@v4
       with:
-        name: MFO_SPRtoBMP
-        path: MFO_SPRtoBMP.zip
+        name: MFO_SPRtoBMP_Executable
+        path: |
+          Release/SPRtoBMP.exe
+          x86/Release/SPRtoBMP.exe
+        if-no-files-found: warn
